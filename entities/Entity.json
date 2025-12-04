@@ -1,0 +1,62 @@
+{
+  "name": "Entity",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name of the entity"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "table",
+        "document"
+      ],
+      "default": "table",
+      "description": "Type of entity"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ok",
+        "stale",
+        "error"
+      ],
+      "default": "ok",
+      "description": "Current status of the entity"
+    },
+    "folderId": {
+      "type": "string",
+      "description": "Folder ID for organization"
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of Entity IDs this entity depends on"
+    },
+    "config": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "operationName": {
+          "type": "string"
+        },
+        "inputParams": {
+          "type": "object"
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "description": "Result of computation"
+    }
+  },
+  "required": [
+    "name",
+    "type"
+  ]
+}

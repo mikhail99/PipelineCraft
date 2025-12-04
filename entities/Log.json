@@ -1,0 +1,27 @@
+{
+    "name": "Log",
+    "type": "object",
+    "properties": {
+        "message": {
+            "type": "string",
+            "description": "Log message"
+        },
+        "level": {
+            "type": "string",
+            "enum": [
+                "info",
+                "success",
+                "warning",
+                "error"
+            ],
+            "default": "info"
+        },
+        "entityId": {
+            "type": "string",
+            "description": "Related entity ID"
+        }
+    },
+    "required": [
+        "message"
+    ]
+}
