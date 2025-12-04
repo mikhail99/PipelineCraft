@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import OperationsPanel from './OperationsPanel';
 import AICopilot from './AICopilot';
 import { Wrench, Sparkles } from 'lucide-react';
 
-export default function RightPanel({ theme = 'dark' }) {
+export default function RightPanel({ theme = 'dark' }: { theme?: string }) {
   const [activeTab, setActiveTab] = useState('operations');
 
   return (

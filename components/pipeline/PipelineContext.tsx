@@ -1,11 +1,48 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, UseMutateFunction } from '@tanstack/react-query';
+import { Entity, Folder, Log, EntityVersion, Branch } from '@/types';
 
-const PipelineContext = createContext(null);
+interface PipelineContextType {
+    entities: Entity[];
+    folders: Folder[];
+    logs: Log[];
+    versions: EntityVersion[];
+    branches: Branch[];
+    currentBranch: string;
+    setCurrentBranch: (branch: string) => void;
+    entitiesLoading: boolean;
+    foldersLoading: boolean;
+    activeEntity: Entity | undefined;
+    activeEntityId: string | null;
+    setActiveEntityId: (id: string | null) => void;
+    leftPanelWidth: number;
+    setLeftPanelWidth: (width: number) => void;
+    rightPanelWidth: number;
+    setRightPanelWidth: (width: number) => void;
+    bottomPanelHeight: number;
+    setBottomPanelHeight: (height: number) => void;
+    bottomPanelCollapsed: boolean;
+    setBottomPanelCollapsed: (collapsed: boolean) => void;
+    createEntity: UseMutateFunction<Entity, Error, Omit<Entity, 'id' | 'created_date'>, unknown>;
+    updateEntity: UseMutateFunction<Entity, Error, { id: string; data: Partial<Entity> }, unknown>;
+    deleteEntity: UseMutateFunction<void, Error, string, unknown>;
+    createFolder: UseMutateFunction<Folder, Error, Omit<Folder, 'id' | 'created_date'>, unknown>;
+    deleteFolder: UseMutateFunction<void, Error, string, unknown>;
+    addLog: (message: string, level?: Log['level'], entityId?: string | null) => void;
+    getChildren: (entityId: string) => Entity[];
+    getParents: (entityId: string) => Entity[];
+    recomputeEntity: (entityId: string) => Promise<void>;
+    createVersion: (entityId: string, message?: string) => void;
+    revertToVersion: (version: EntityVersion) => Promise<void>;
+    createBranch: (name: string, parentBranch: string) => void;
+    mergeBranch: (sourceBranch: string, targetBranch: string, entityId: string) => Promise<void>;
+}
 
-export function PipelineProvider({ children }) {
-    const [activeEntityId, setActiveEntityId] = useState(null);
+const PipelineContext = createContext<PipelineContextType | null>(null);
+
+export function PipelineProvider({ children }: { children: ReactNode }) {
+    const [activeEntityId, setActiveEntityId] = useState<string | null>(null);
     const [leftPanelWidth, setLeftPanelWidth] = useState(250);
     const [rightPanelWidth, setRightPanelWidth] = useState(300);
     const [bottomPanelHeight, setBottomPanelHeight] = useState(200);
@@ -45,7 +82,7 @@ export function PipelineProvider({ children }) {
         },
     });
 
-    const createEntityMutation = useMutation({
+    const createEntityMutation = useMutation<Entity, Error, Omit<Entity, 'id' | 'created_date'>>({
         mutationFn: (data) => base44.entities.Entity.create(data),
         onSuccess: (newEntity) => {
             queryClient.invalidateQueries({ queryKey: ['entities'] });
@@ -61,14 +98,14 @@ export function PipelineProvider({ children }) {
         },
     });
 
-    const updateEntityMutation = useMutation({
+    const updateEntityMutation = useMutation<Entity, Error, { id: string; data: Partial<Entity> }>({
         mutationFn: ({ id, data }) => base44.entities.Entity.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['entities'] });
         },
     });
 
-    const deleteEntityMutation = useMutation({
+    const deleteEntityMutation = useMutation<void, Error, string>({
         mutationFn: (id) => base44.entities.Entity.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['entities'] });
@@ -76,14 +113,14 @@ export function PipelineProvider({ children }) {
         },
     });
 
-    const createFolderMutation = useMutation({
+    const createFolderMutation = useMutation<Folder, Error, Omit<Folder, 'id' | 'created_date'>>({
         mutationFn: (data) => base44.entities.Folder.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['folders'] });
         },
     });
 
-    const deleteFolderMutation = useMutation({
+    const deleteFolderMutation = useMutation<void, Error, string>({
         mutationFn: (id) => base44.entities.Folder.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['folders'] });
@@ -91,21 +128,21 @@ export function PipelineProvider({ children }) {
         },
     });
 
-    const addLogMutation = useMutation({
+    const addLogMutation = useMutation<Log, Error, Omit<Log, 'id' | 'created_date'>>({
         mutationFn: (data) => base44.entities.Log.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['logs'] });
         },
     });
 
-    const createVersionMutation = useMutation({
+    const createVersionMutation = useMutation<EntityVersion, Error, Omit<EntityVersion, 'id' | 'created_date'>>({
         mutationFn: (data) => base44.entities.EntityVersion.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['versions'] });
         },
     });
 
-    const createBranchMutation = useMutation({
+    const createBranchMutation = useMutation<Branch, Error, Omit<Branch, 'id' | 'created_date'>>({
         mutationFn: (data) => base44.entities.Branch.create(data),
         onSuccess: (newBranch) => {
             queryClient.invalidateQueries({ queryKey: ['branches'] });
@@ -114,25 +151,25 @@ export function PipelineProvider({ children }) {
         },
     });
 
-    const addLog = useCallback((message, level = 'info', entityId = null) => {
-        addLogMutation.mutate({ message, level, entityId });
+    const addLog = useCallback((message: string, level: Log['level'] = 'info', entityId: string | null = null) => {
+        addLogMutation.mutate({ message, level, entityId } as any);
     }, [addLogMutation]);
 
-    const getChildren = useCallback((entityId) => {
+    const getChildren = useCallback((entityId: string) => {
         return entities.filter(e => e.dependencies?.includes(entityId));
     }, [entities]);
 
-    const getParents = useCallback((entityId) => {
+    const getParents = useCallback((entityId: string) => {
         const entity = entities.find(e => e.id === entityId);
         if (!entity?.dependencies) return [];
-        return entities.filter(e => entity.dependencies.includes(e.id));
+        return entities.filter(e => entity.dependencies!.includes(e.id));
     }, [entities]);
 
-    const recomputeEntity = useCallback(async (entityId) => {
+    const recomputeEntity = useCallback(async (entityId: string) => {
         const entity = entities.find(e => e.id === entityId);
         if (!entity) return;
 
-        const getDownstream = (id, visited = new Set()) => {
+        const getDownstream = (id: string, visited = new Set<string>()): string[] => {
             if (visited.has(id)) return [];
             visited.add(id);
             const children = getChildren(id);
@@ -167,7 +204,7 @@ export function PipelineProvider({ children }) {
         }
     }, [entities, getChildren, updateEntityMutation, addLog]);
 
-    const createVersion = useCallback((entityId, message = '') => {
+    const createVersion = useCallback((entityId: string, message = '') => {
         const entity = entities.find(e => e.id === entityId);
         if (!entity) return;
 
@@ -186,7 +223,7 @@ export function PipelineProvider({ children }) {
         addLog(`Version ${nextVersion} created for '${entity.name}'`, 'success', entityId);
     }, [entities, versions, currentBranch, createVersionMutation, addLog]);
 
-    const revertToVersion = useCallback(async (version) => {
+    const revertToVersion = useCallback(async (version: EntityVersion) => {
         const { snapshot } = version;
         if (!snapshot) return;
 
@@ -208,7 +245,7 @@ export function PipelineProvider({ children }) {
         createVersion(version.entityId, `Reverted to v${version.version}`);
     }, [updateEntityMutation, entities, addLog, createVersion]);
 
-    const createBranch = useCallback((name, parentBranch) => {
+    const createBranch = useCallback((name: string, parentBranch: string) => {
         createBranchMutation.mutate({
             name,
             parentBranch,
@@ -217,7 +254,7 @@ export function PipelineProvider({ children }) {
         });
     }, [createBranchMutation]);
 
-    const mergeBranch = useCallback(async (sourceBranch, targetBranch, entityId) => {
+    const mergeBranch = useCallback(async (sourceBranch: string, targetBranch: string, entityId: string) => {
         const sourceVersions = versions
             .filter(v => v.entityId === entityId && v.branch === sourceBranch)
             .sort((a, b) => b.version - a.version);

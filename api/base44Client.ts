@@ -1,13 +1,6 @@
-// Mock Base44 Client - LocalStorage based implementation
-// This client simulates a backend by storing data in localStorage
+import { Entity, Folder, Log, EntityVersion, Branch, BaseRecord, Agent } from '../types';
 
-type EntityType = 'Entity' | 'Folder' | 'Log' | 'EntityVersion' | 'Branch';
-
-interface BaseRecord {
-    id: string;
-    created_date: string;
-    [key: string]: unknown;
-}
+type EntityType = 'Entity' | 'Folder' | 'Log' | 'EntityVersion' | 'Branch' | 'Agent';
 
 function generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -37,8 +30,8 @@ function createEntityMethods<T extends BaseRecord>(entityType: EntityType) {
                 const descending = sortField.startsWith('-');
                 const field = descending ? sortField.slice(1) : sortField;
                 records = records.sort((a, b) => {
-                    const aVal = a[field] as string | number;
-                    const bVal = b[field] as string | number;
+                    const aVal = a[field as keyof T] as string | number;
+                    const bVal = b[field as keyof T] as string | number;
                     if (aVal < bVal) return descending ? 1 : -1;
                     if (aVal > bVal) return descending ? -1 : 1;
                     return 0;
@@ -90,10 +83,20 @@ function createEntityMethods<T extends BaseRecord>(entityType: EntityType) {
 
 export const base44 = {
     entities: {
-        Entity: createEntityMethods<BaseRecord>('Entity'),
-        Folder: createEntityMethods<BaseRecord>('Folder'),
-        Log: createEntityMethods<BaseRecord>('Log'),
-        EntityVersion: createEntityMethods<BaseRecord>('EntityVersion'),
-        Branch: createEntityMethods<BaseRecord>('Branch'),
+        Entity: createEntityMethods<Entity>('Entity'),
+        Folder: createEntityMethods<Folder>('Folder'),
+        Log: createEntityMethods<Log>('Log'),
+        EntityVersion: createEntityMethods<EntityVersion>('EntityVersion'),
+        Branch: createEntityMethods<Branch>('Branch'),
+        Agent: createEntityMethods<Agent>('Agent'),
     },
+    integrations: {
+        Core: {
+            InvokeLLM: async ({ prompt }: { prompt: string }): Promise<string> => {
+                console.log('Invoking LLM with prompt:', prompt);
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
+                return "This is a simulated AI response. In a real app, this would call an LLM API.";
+            }
+        }
+    }
 };

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { usePipeline } from './PipelineContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,10 +21,10 @@ const defaultAgents = [
   { id: 'data', name: 'Data Engineer', description: 'Data transformations and ETL' },
 ];
 
-export default function AICopilot() {
+export default function AICopilot({ theme: _theme }: { theme?: string }) {
   const { entities, activeEntity } = usePipeline();
   const [selectedAgent, setSelectedAgent] = useState('general');
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<{ role: string; content: string }[]>([
     {
       role: 'assistant',
       content: "Hello! I'm your AI Copilot. I can help you understand your data pipeline, suggest operations, or explain errors. What would you like to know?",
@@ -32,7 +32,7 @@ export default function AICopilot() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const scrollRef = useRef(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { data: customAgents = [] } = useQuery({
     queryKey: ['agents'],

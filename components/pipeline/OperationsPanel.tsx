@@ -38,7 +38,20 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-const operations = [
+
+interface Operation {
+  name: string;
+  icon: React.ElementType;
+  description: string;
+}
+
+interface Category {
+  category: string;
+  icon: React.ElementType;
+  items: Operation[];
+}
+
+const operations: Category[] = [
   {
     category: 'Data Transformation',
     icon: ArrowRightLeft,
@@ -76,7 +89,7 @@ const operations = [
   },
 ];
 
-const OperationCard = ({ operation, onClick }) => {
+const OperationCard = ({ operation, onClick }: { operation: Operation; onClick: () => void }) => {
   const Icon = operation.icon;
   return (
     <button
@@ -99,7 +112,7 @@ const OperationCard = ({ operation, onClick }) => {
   );
 };
 
-const CategorySection = ({ category, onSelectOperation }) => {
+const CategorySection = ({ category, onSelectOperation }: { category: Category; onSelectOperation: (op: Operation) => void }) => {
   const [expanded, setExpanded] = useState(true);
   const Icon = category.icon;
 
@@ -132,16 +145,16 @@ const CategorySection = ({ category, onSelectOperation }) => {
   );
 };
 
-export default function OperationsPanel() {
-  const { entities, folders, createEntity, addLog } = usePipeline();
-  const [selectedOperation, setSelectedOperation] = useState(null);
+export default function OperationsPanel({ theme: _theme }: { theme?: string }) {
+  const { entities, folders, createEntity } = usePipeline();
+  const [selectedOperation, setSelectedOperation] = useState<Operation | null>(null);
   const [newEntityName, setNewEntityName] = useState('');
   const [newEntityDescription, setNewEntityDescription] = useState('');
-  const [selectedInputs, setSelectedInputs] = useState([]);
-  const [selectedFolder, setSelectedFolder] = useState('');
+  const [selectedInputs, setSelectedInputs] = useState<string[]>([]);
+  const [selectedFolder, setSelectedFolder] = useState<string>('');
   const [entityType, setEntityType] = useState('table');
 
-  const handleSelectOperation = (operation) => {
+  const handleSelectOperation = (operation: Operation) => {
     setSelectedOperation(operation);
     setNewEntityName('');
     setNewEntityDescription('');
@@ -151,7 +164,7 @@ export default function OperationsPanel() {
   };
 
   const handleCreate = () => {
-    if (!newEntityName.trim()) return;
+    if (!newEntityName.trim() || !selectedOperation) return;
 
     // Generate mock data based on type
     let mockData;
@@ -174,8 +187,8 @@ export default function OperationsPanel() {
       name: newEntityName.trim(),
       type: entityType,
       status: 'ok',
-      folderId: selectedFolder || null,
-      dependencies: selectedInputs,
+      folderId: selectedFolder === 'root' || !selectedFolder ? undefined : selectedFolder,
+      dependencies: selectedInputs.filter(id => id !== 'none'),
       config: {
         description: newEntityDescription,
         operationName: selectedOperation.name,
@@ -261,7 +274,7 @@ export default function OperationsPanel() {
                     <SelectValue placeholder="Root" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value={null}>Root</SelectItem>
+                    <SelectItem value="root">Root</SelectItem>
                     {folders.map((f) => (
                       <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
                     ))}
@@ -280,7 +293,7 @@ export default function OperationsPanel() {
                   <SelectValue placeholder="Select input entity" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value={null}>None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {entities.map((e) => (
                     <SelectItem key={e.id} value={e.id}>
                       {e.name}

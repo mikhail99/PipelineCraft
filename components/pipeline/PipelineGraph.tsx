@@ -10,9 +10,11 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { usePipeline } from './PipelineContext';
 import { cn } from '@/lib/utils';
+import { Entity } from '@/types';
 import { Table, FileText, ChevronDown } from 'lucide-react';
+import { Node, Edge, NodeProps } from 'reactflow';
 
-const EntityNode = ({ data }) => {
+const EntityNode = ({ data }: NodeProps) => {
     const statusColors = {
         ok: 'border-emerald-500 bg-emerald-500/10',
         stale: 'border-amber-500 bg-amber-500/10',
@@ -32,13 +34,13 @@ const EntityNode = ({ data }) => {
             className={cn(
                 'px-4 py-3 rounded-lg border-2 min-w-[140px] cursor-pointer transition-all',
                 'hover:shadow-lg hover:shadow-cyan-500/20',
-                statusColors[data.status] || 'border-slate-600 bg-slate-800',
+                statusColors[data.status as keyof typeof statusColors] || 'border-slate-600 bg-slate-800',
                 data.isActive && 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900'
             )}
         >
             <div className="flex items-center gap-2">
                 <ChevronDown className="w-4 h-4 text-slate-500" />
-                <span className={cn('w-2 h-2 rounded-full', statusDot[data.status] || 'bg-slate-500')} />
+                <span className={cn('w-2 h-2 rounded-full', statusDot[data.status as keyof typeof statusDot] || 'bg-slate-500')} />
                 <Icon className="w-4 h-4 text-slate-400" />
                 <span className="text-sm font-mono text-slate-200 truncate max-w-[100px]">
                     {data.label}
@@ -52,15 +54,15 @@ const nodeTypes = {
     entity: EntityNode,
 };
 
-export default function PipelineGraph({ theme = 'dark' }) {
+export default function PipelineGraph({ theme = 'dark' }: { theme?: string }) {
     const { entities, activeEntityId, setActiveEntityId } = usePipeline();
 
     const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {
-        const nodeMap = new Map();
-        const levels = new Map();
+        const nodeMap = new Map<string, { x: number; y: number }>();
+        const levels = new Map<number, Entity[]>();
 
         // Calculate levels based on dependencies
-        const getLevel = (entity, visited = new Set()) => {
+        const getLevel = (entity: Entity, visited = new Set<string>()): number => {
             if (visited.has(entity.id)) return 0;
             visited.add(entity.id);
 
@@ -82,11 +84,11 @@ export default function PipelineGraph({ theme = 'dark' }) {
             if (!levels.has(level)) {
                 levels.set(level, []);
             }
-            levels.get(level).push(entity);
+            levels.get(level)!.push(entity);
         });
 
         // Create nodes with positions
-        const nodes = [];
+        const nodes: Node[] = [];
         const xSpacing = 200;
         const ySpacing = 100;
 
@@ -111,7 +113,7 @@ export default function PipelineGraph({ theme = 'dark' }) {
         });
 
         // Create edges
-        const edges = [];
+        const edges: Edge[] = [];
         entities.forEach(entity => {
             (entity.dependencies || []).forEach(depId => {
                 if (nodeMap.has(depId)) {
@@ -148,7 +150,7 @@ export default function PipelineGraph({ theme = 'dark' }) {
         setEdges(initialEdges);
     }, [initialNodes, initialEdges, setNodes, setEdges]);
 
-    const onNodeClick = useCallback((event, node) => {
+    const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
         setActiveEntityId(node.id);
     }, [setActiveEntityId]);
 

@@ -1,11 +1,11 @@
-import React from 'react';
 import { usePipeline } from './PipelineContext';
+import { Log } from '@/types';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Info, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import moment from 'moment';
 
-const LogIcon = ({ level }) => {
+const LogIcon = ({ level }: { level: Log['level'] }) => {
     const config = {
         info: { icon: Info, color: 'text-slate-400' },
         success: { icon: CheckCircle2, color: 'text-emerald-400' },

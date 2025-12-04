@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { PipelineProvider, usePipeline } from '../components/pipeline/PipelineContext';
 import EntityExplorer from '../components/pipeline/EntityExplorer';
 import EntityWorkspace from '../components/pipeline/EntityWorkspace';
@@ -33,7 +33,7 @@ function PipelineLayout() {
         },
     };
 
-    const t = themeClasses[theme];
+    const t = themeClasses[theme as keyof typeof themeClasses];
 
     return (
         <div className={cn('h-screen w-screen flex flex-col overflow-hidden', t.bg, t.text)} data-theme={theme}>

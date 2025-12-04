@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from './PipelineContext';
+import { Log } from '@/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,7 +16,7 @@ import {
 } from 'lucide-react';
 import moment from 'moment';
 
-const LogIcon = ({ level }) => {
+const LogIcon = ({ level }: { level: Log['level'] }) => {
     const config = {
         info: { icon: Info, color: 'text-slate-400' },
         success: { icon: CheckCircle2, color: 'text-emerald-400' },
@@ -27,7 +28,7 @@ const LogIcon = ({ level }) => {
     return <Icon className={cn('w-3.5 h-3.5 shrink-0', c.color)} />;
 };
 
-export default function BottomPanel({ theme = 'dark' }) {
+export default function BottomPanel({ theme = 'dark' }: { theme?: string }) {
     const [activeTab, setActiveTab] = useState('logs');
     const { logs, versions, activeEntity, revertToVersion } = usePipeline();
 

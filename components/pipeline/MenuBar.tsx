@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { cn } from '@/lib/utils';
 import { usePipeline } from './PipelineContext';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 
-export default function MenuBar({ theme, setTheme }) {
+export default function MenuBar({ theme, setTheme }: { theme: string; setTheme: (theme: string) => void }) {
     const { branches, currentBranch, setCurrentBranch, recomputeEntity, entities } = usePipeline();
 
     const handleRecomputeAll = async () => {

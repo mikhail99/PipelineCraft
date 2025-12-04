@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { usePipeline } from './PipelineContext';
+import { Entity, Folder } from '@/types';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { ChevronRight, ChevronDown, Folder, FolderOpen, Table, FileText, Plus, Trash2 } from 'lucide-react';
+import { ChevronRight, ChevronDown, Folder as FolderIcon, FolderOpen, Table, FileText, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,18 +24,19 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-const StatusDot = ({ status }) => {
+const StatusDot = ({ status }: { status: Entity['status'] }) => {
   const colors = {
     ok: 'bg-emerald-500',
     stale: 'bg-amber-500',
     error: 'bg-red-500',
+    pending: 'bg-slate-500',
   };
   return (
     <span className={cn('w-2 h-2 rounded-full shrink-0', colors[status] || 'bg-slate-500')} />
   );
 };
 
-const EntityItem = ({ entity, index, onDelete }) => {
+const EntityItem = ({ entity, index, onDelete }: { entity: Entity; index: number; onDelete: (entity: Entity) => void }) => {
   const { activeEntityId, setActiveEntityId } = usePipeline();
   const isActive = activeEntityId === entity.id;
   const Icon = entity.type === 'table' ? Table : FileText;
@@ -77,14 +79,14 @@ const EntityItem = ({ entity, index, onDelete }) => {
   );
 };
 
-const FolderItem = ({ folder, entities, folders, onDelete, onDeleteEntity }) => {
+const FolderItem = ({ folder, entities, folders, onDelete, onDeleteEntity }: { folder: Folder; entities: Entity[]; folders: Folder[]; onDelete: (folder: Folder) => void; onDeleteEntity: (entity: Entity) => void }) => {
   const [expanded, setExpanded] = useState(true);
 
   const sortedEntities = useMemo(() => {
     const folderEntities = entities.filter(e => e.folderId === folder.id);
-    const sorted = [];
+    const sorted: Entity[] = [];
     const remaining = [...folderEntities];
-    const added = new Set();
+    const added = new Set<string>();
 
     while (remaining.length > 0) {
       const toAdd = remaining.filter(entity => {
@@ -129,7 +131,7 @@ const FolderItem = ({ folder, entities, folders, onDelete, onDeleteEntity }) => 
           {expanded ? (
             <FolderOpen className="w-4 h-4 text-amber-500" />
           ) : (
-            <Folder className="w-4 h-4 text-amber-500" />
+            <FolderIcon className="w-4 h-4 text-amber-500" />
           )}
           <span className="font-medium">{folder.name}</span>
         </button>
@@ -173,12 +175,12 @@ const FolderItem = ({ folder, entities, folders, onDelete, onDeleteEntity }) => 
   );
 };
 
-export default function EntityExplorer({ theme = 'dark' }) {
+export default function EntityExplorer({ theme = 'dark' }: { theme?: string }) {
   const { entities, folders, createFolder, updateEntity, deleteEntity, deleteFolder, entitiesLoading } = usePipeline();
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [deleteType, setDeleteType] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState<Entity | Folder | null>(null);
+  const [deleteType, setDeleteType] = useState<'entity' | 'folder' | null>(null);
 
   const rootFolders = folders.filter(f => !f.parentId);
   const rootEntities = useMemo(() => {
@@ -187,9 +189,9 @@ export default function EntityExplorer({ theme = 'dark' }) {
   }, [entities, folders]);
 
   const sortedRootEntities = useMemo(() => {
-    const sorted = [];
+    const sorted: Entity[] = [];
     const remaining = [...rootEntities];
-    const added = new Set();
+    const added = new Set<string>();
 
     while (remaining.length > 0) {
       const toAdd = remaining.filter(entity => {
@@ -223,7 +225,7 @@ export default function EntityExplorer({ theme = 'dark' }) {
     }
   };
 
-  const handleDragEnd = (result) => {
+  const handleDragEnd = (result: any) => {
     if (!result.destination) return;
 
     const entityId = result.draggableId;
@@ -232,17 +234,18 @@ export default function EntityExplorer({ theme = 'dark' }) {
     updateEntity({ id: entityId, data: { folderId: destFolderId } });
   };
 
-  const handleDeleteEntity = (entity) => {
+  const handleDeleteEntity = (entity: Entity) => {
     setDeleteTarget(entity);
     setDeleteType('entity');
   };
 
-  const handleDeleteFolder = (folder) => {
+  const handleDeleteFolder = (folder: Folder) => {
     setDeleteTarget(folder);
     setDeleteType('folder');
   };
 
   const confirmDelete = () => {
+    if (!deleteTarget) return;
     if (deleteType === 'entity') {
       deleteEntity(deleteTarget.id);
     } else if (deleteType === 'folder') {

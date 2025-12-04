@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { usePipeline } from './PipelineContext';
+import { Entity } from '@/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,8 +17,8 @@ import {
 import { RefreshCw, ArrowUpRight, ArrowDownRight, Pencil, Check, X, FileText, Table as TableIcon, Loader2, Network } from 'lucide-react';
 import PipelineGraph from './PipelineGraph';
 
-const StatusBadge = ({ status }) => {
-  const config = {
+const StatusBadge = ({ status }: { status: Entity['status'] }) => {
+  const config: Record<string, { label: string; className: string }> = {
     ok: { label: 'Ready', className: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
     stale: { label: 'Stale', className: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
     error: { label: 'Error', className: 'bg-red-500/20 text-red-400 border-red-500/30' },
@@ -30,7 +31,14 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const LineageSection = ({ title, icon: Icon, entities, iconColor }) => (
+interface LineageSectionProps {
+  title: string;
+  icon: React.ElementType;
+  entities: Entity[];
+  iconColor: string;
+}
+
+const LineageSection = ({ title, icon: Icon, entities, iconColor }: LineageSectionProps) => (
   <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
     <div className="flex items-center gap-2 mb-3">
       <Icon className={cn('w-4 h-4', iconColor)} />
@@ -58,7 +66,7 @@ const LineageSection = ({ title, icon: Icon, entities, iconColor }) => (
   </div>
 );
 
-const DataPreview = ({ entity }) => {
+const DataPreview = ({ entity }: { entity: Entity }) => {
   if (!entity.data) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-slate-500">
@@ -96,7 +104,7 @@ const DataPreview = ({ entity }) => {
       <Table>
         <TableHeader>
           <TableRow className="border-slate-700 hover:bg-transparent">
-            {data.headers.map((header, i) => (
+            {data.headers.map((header: string, i: number) => (
               <TableHead key={i} className="text-slate-400 font-mono text-xs">
                 {header}
               </TableHead>
@@ -104,9 +112,9 @@ const DataPreview = ({ entity }) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.rows.map((row, i) => (
+          {data.rows.map((row: any[], i: number) => (
             <TableRow key={i} className="border-slate-700/50 hover:bg-slate-800/50">
-              {row.map((cell, j) => (
+              {row.map((cell: any, j: number) => (
                 <TableCell key={j} className="font-mono text-sm text-slate-300">
                   {cell}
                 </TableCell>
@@ -119,7 +127,7 @@ const DataPreview = ({ entity }) => {
   );
 };
 
-export default function EntityWorkspace({ theme = 'dark' }) {
+export default function EntityWorkspace({ theme = 'dark' }: { theme?: string }) {
   const { activeEntity, updateEntity, getParents, getChildren, recomputeEntity } = usePipeline();
   const [activeTab, setActiveTab] = useState('graph');
   const [isEditing, setIsEditing] = useState(false);

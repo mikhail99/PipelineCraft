@@ -1,5 +1,13 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+
+interface ResizeHandleProps {
+    direction?: 'horizontal' | 'vertical';
+    onResize: (size: number) => void;
+    minSize?: number;
+    maxSize?: number;
+    theme?: string;
+}
 
 export default function ResizeHandle({
     direction = 'horizontal',
@@ -7,10 +15,10 @@ export default function ResizeHandle({
     minSize = 150,
     maxSize = 600,
     theme = 'dark',
-}) {
+}: ResizeHandleProps) {
     const [isDragging, setIsDragging] = useState(false);
 
-    const handleMouseDown = useCallback((e) => {
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
         setIsDragging(true);
     }, []);
@@ -18,7 +26,7 @@ export default function ResizeHandle({
     useEffect(() => {
         if (!isDragging) return;
 
-        const handleMouseMove = (e) => {
+        const handleMouseMove = (e: MouseEvent) => {
             if (direction === 'horizontal') {
                 const newSize = Math.max(minSize, Math.min(maxSize, e.clientX));
                 onResize(newSize);
