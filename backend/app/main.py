@@ -8,13 +8,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from .database import init_db, get_db
-from .models import Library, Template, Report, Paper
+from .models import (
+    Library, Template, Report, Paper,
+    Folder as FolderModel, Log as LogModel,
+    Branch as BranchModel, EntityVersion as EntityVersionModel
+)
 from .schemas import (
     LibraryCreate, LibraryResponse, LibrarySummary,
     TemplateCreate, TemplateResponse,
     ReportCreate, ReportResponse,
     PaperCreate, PaperResponse,
-    Entity, EntityConfig, EntityData, Folder, Log
+    Entity, EntityConfig, EntityData, Folder, Log,
+    Branch, EntityVersion
 )
 from .llm_service import generate_report_content
 
@@ -197,14 +202,22 @@ def delete_entity(entity_id: str, db: Session = Depends(get_db)):
 # =============================================================================
 
 @app.get("/api/folders", response_model=List[Folder])
-def list_folders():
-    """Return the fixed folder structure."""
-    now = datetime.utcnow()
-    return [
-        Folder(id="folder-libraries", name="Libraries", parentId=None, created_date=now),
-        Folder(id="folder-templates", name="Templates", parentId=None, created_date=now),
-        Folder(id="folder-reports", name="Reports", parentId=None, created_date=now),
-    ]
+def list_folders(db: Session = Depends(get_db)):
+    """Return the folder structure."""
+    folders = db.query(FolderModel).all()
+    if not folders:
+        # Initialize default folders if none exist
+        now = datetime.utcnow()
+        defaults = [
+            FolderModel(id="folder-libraries", name="Libraries", parentId=None, created_date=now),
+            FolderModel(id="folder-templates", name="Templates", parentId=None, created_date=now),
+            FolderModel(id="folder-reports", name="Reports", parentId=None, created_date=now),
+        ]
+        for f in defaults:
+            db.add(f)
+        db.commit()
+        folders = defaults
+    return folders
 
 
 # =============================================================================
@@ -448,27 +461,43 @@ def remove_paper_from_library(library_id: str, paper_id: str, db: Session = Depe
 
 
 # =============================================================================
-# Logs API (in-memory for now)
+# Logs API
 # =============================================================================
 
-_logs: List[Log] = []
-
-
 @app.get("/api/logs", response_model=List[Log])
-def list_logs(limit: int = 50):
+def list_logs(limit: int = 50, db: Session = Depends(get_db)):
     """List recent logs."""
-    return _logs[-limit:]
+    return db.query(LogModel).order_by(LogModel.created_date.desc()).limit(limit).all()
 
 
 @app.post("/api/logs", response_model=Log)
-def create_log(message: str, level: str = "info", entity_id: Optional[str] = None):
+def create_log(message: str, level: str = "info", entity_id: Optional[str] = None, db: Session = Depends(get_db)):
     """Create a log entry."""
-    log = Log(
+    log = LogModel(
         id=generate_id(),
         message=message,
         level=level,
         entityId=entity_id,
         created_date=datetime.utcnow()
     )
-    _logs.append(log)
+    db.add(log)
+    db.commit()
+    db.refresh(log)
     return log
+
+
+# =============================================================================
+# Version Control API
+# =============================================================================
+
+@app.get("/api/branches", response_model=List[Branch])
+def list_branches(db: Session = Depends(get_db)):
+    return db.query(BranchModel).all()
+
+
+@app.get("/api/entity-versions", response_model=List[EntityVersion])
+def list_entity_versions(entity_id: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(EntityVersionModel)
+    if entity_id:
+        query = query.filter(EntityVersionModel.entityId == entity_id)
+    return query.all()

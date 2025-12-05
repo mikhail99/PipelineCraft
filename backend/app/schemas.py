@@ -158,6 +158,9 @@ class Folder(BaseModel):
     parentId: Optional[str] = None
     created_date: datetime
 
+    class Config:
+        from_attributes = True
+
 
 class Log(BaseModel):
     """Log entry."""
@@ -166,3 +169,27 @@ class Log(BaseModel):
     level: str  # 'info', 'success', 'error', 'warning'
     entityId: Optional[str] = None
     created_date: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class Branch(BaseModel):
+    id: str
+    name: str
+    headVersionId: Optional[str] = None
+    created_date: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class EntityVersion(BaseModel):
+    id: str
+    entityId: str
+    data: str
+    parentId: Optional[str] = None
+    created_date: datetime
+
+    class Config:
+        from_attributes = True

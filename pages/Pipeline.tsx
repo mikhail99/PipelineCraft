@@ -6,7 +6,7 @@ import RightPanel from '../components/pipeline/RightPanel';
 import BottomPanel from '../components/pipeline/BottomPanel';
 import ResizeHandle from '../components/pipeline/ResizeHandle';
 import MenuBar from '../components/pipeline/MenuBar';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/utils';
 
 function PipelineLayout() {
     const {

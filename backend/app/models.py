@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Table, create_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, backref
 
 
 class Base(DeclarativeBase):
@@ -78,3 +78,48 @@ class Report(Base):
 
     # Relationships
     template: Mapped[Optional["Template"]] = relationship()
+
+
+class Folder(Base):
+    """A hierarchical folder for organizing entities."""
+    __tablename__ = "folders"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    parentId: Mapped[Optional[str]] = mapped_column(String, ForeignKey("folders.id"), nullable=True)
+    created_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Self-referential relationship for nested folders
+    children: Mapped[List["Folder"]] = relationship("Folder", backref=backref("parent", remote_side=[id]))
+
+
+class Log(Base):
+    """System event log."""
+    __tablename__ = "logs"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    level: Mapped[str] = mapped_column(String, default="info")  # info, success, error, warning
+    entityId: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    created_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class Branch(Base):
+    """Version control branch."""
+    __tablename__ = "branches"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    headVersionId: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    created_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class EntityVersion(Base):
+    """Immutable version of an entity."""
+    __tablename__ = "entity_versions"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    entityId: Mapped[str] = mapped_column(String, nullable=False)
+    data: Mapped[str] = mapped_column(Text, nullable=False)  # JSON dump of entity state
+    parentId: Mapped[Optional[str]] = mapped_column(String, ForeignKey("entity_versions.id"), nullable=True)
+    created_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
