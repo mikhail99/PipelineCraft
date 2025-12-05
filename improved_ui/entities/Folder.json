@@ -1,0 +1,17 @@
+{
+    "name": "Folder",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Folder name"
+        },
+        "parentId": {
+            "type": "string",
+            "description": "Parent folder ID for nesting"
+        }
+    },
+    "required": [
+        "name"
+    ]
+}

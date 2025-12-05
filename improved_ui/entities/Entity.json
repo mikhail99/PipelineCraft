@@ -1,0 +1,81 @@
+{
+    "name": "Entity",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Display name of the entity"
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "table",
+                "document"
+            ],
+            "default": "table",
+            "description": "Type of entity"
+        },
+        "status": {
+            "type": "string",
+            "enum": [
+                "ok",
+                "stale",
+                "error"
+            ],
+            "default": "ok",
+            "description": "Current status of the entity"
+        },
+        "folderId": {
+            "type": "string",
+            "description": "Folder ID for organization"
+        },
+        "dependencies": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Array of Entity IDs this entity depends on"
+        },
+        "config": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "operationChain": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "operation": {
+                                "type": "string"
+                            },
+                            "params": {
+                                "type": "object"
+                            },
+                            "secondaryInput": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "description": "Chain of operations to execute in sequence"
+                },
+                "pipelineDescription": {
+                    "type": "string",
+                    "description": "Human-readable pipeline description like 'Filter \u2192 Map \u2192 Reduce'"
+                }
+            }
+        },
+        "data": {
+            "type": "object",
+            "description": "Result of computation"
+        }
+    },
+    "required": [
+        "name",
+        "type"
+    ]
+}

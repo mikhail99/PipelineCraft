@@ -1,0 +1,32 @@
+{
+    "name": "EntityVersion",
+    "type": "object",
+    "properties": {
+        "entityId": {
+            "type": "string",
+            "description": "Reference to the entity"
+        },
+        "version": {
+            "type": "number",
+            "description": "Version number"
+        },
+        "snapshot": {
+            "type": "object",
+            "description": "Complete entity state at this version"
+        },
+        "message": {
+            "type": "string",
+            "description": "Commit message"
+        },
+        "branch": {
+            "type": "string",
+            "default": "main",
+            "description": "Branch name"
+        }
+    },
+    "required": [
+        "entityId",
+        "version",
+        "snapshot"
+    ]
+}

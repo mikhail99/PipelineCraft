@@ -1,0 +1,26 @@
+{
+    "name": "Agent",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Agent display name"
+        },
+        "description": {
+            "type": "string",
+            "description": "What this agent specializes in"
+        },
+        "model": {
+            "type": "string",
+            "enum": [
+                "gpt-4",
+                "gpt-3.5-turbo",
+                "claude-3"
+            ],
+            "default": "gpt-4"
+        }
+    },
+    "required": [
+        "name"
+    ]
+}
